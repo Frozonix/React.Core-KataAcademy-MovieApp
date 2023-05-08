@@ -13,11 +13,12 @@ body {
 .App {
   background-color: white;
   min-height: 100vh;
-}
-
-.movies-content {
   padding: 20px 32px;
 }
+
+/* .movies-content {
+  padding: 20px 32px;
+} */
 
 /* //////////////////////////////////////////////////////// */
 .movie-card {

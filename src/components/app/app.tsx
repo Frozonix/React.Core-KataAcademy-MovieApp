@@ -1,12 +1,30 @@
-import React, { ReactElement, useEffect, useState } from 'react'
-import { Row, Col } from 'antd'
+import React, { ReactElement, ReactNode, useEffect, useState } from 'react'
+import { Row, Col, Spin, Alert } from 'antd'
+import { LoadingOutlined } from '@ant-design/icons'
 
+import { SearchInput } from '../search-input/search-input'
 import { MovieCard } from '../movie-card/movie-card'
 import { MovieDB } from '../../services/movie-db/movie-db'
 import './app.css'
 
 export function App() {
   const [moviesData, setMoviesData] = useState<string[][]>([])
+
+  interface I_loading {
+    loading: boolean
+    error: boolean
+    errorMessage?: string
+  }
+  const [uploadState, setUploadState] = useState<I_loading>({ loading: true, error: false })
+  const antIcon = (
+    <LoadingOutlined
+      style={{
+        color: 'yellow',
+        fontSize: 100,
+      }}
+      spin
+    />
+  )
 
   interface I_movieItem {
     title: 'string'
@@ -18,18 +36,26 @@ export function App() {
   useEffect(() => {
     const api = new MovieDB()
     const uploadData = () => {
-      api.getResource().then((result) => {
-        const array = result.results.map((item: I_movieItem, index: number): string[] => {
-          console.log(item)
-          let title
-          let releaseDate
-          let overview
-          let path
-          ;({ title, release_date: releaseDate, overview, poster_path: path } = item)
-          return [title, releaseDate, overview, path]
+      api
+        .getResource()
+        .then((result) => {
+          const array = result.results.slice(0, 6).map((item: I_movieItem, index: number): string[] => {
+            console.log(item)
+            let title
+            let releaseDate
+            let overview
+            let path
+            ;({ title, release_date: releaseDate, overview, poster_path: path } = item)
+            return [title, releaseDate, overview, path]
+          })
+
+          setMoviesData(array)
+          setUploadState({ loading: false, error: false })
         })
-        setMoviesData(array)
-      })
+        .catch((e: Error) => {
+          console.log(e)
+          setUploadState({ loading: false, error: true, errorMessage: e.toString() })
+        })
     }
     uploadData()
   }, [])
@@ -50,10 +76,27 @@ export function App() {
     })
   }
 
+  function showLoading() {
+    if (uploadState.loading) {
+      return <Spin indicator={antIcon} style={{ display: 'block', margin: '40px auto 0 auto' }} />
+    }
+    return null
+  }
+  function showError() {
+    if (uploadState.error) {
+      return <Alert type="error" message={uploadState.errorMessage} banner />
+    }
+    return null
+  }
+
   //   const movie
   return (
     <div className="App">
+      <SearchInput />
       <section className="movies-content">
+        {showLoading()}
+        {showError()}
+        {/* <Spin indicator={antIcon} /> */}
         <Row gutter={[36, 32]} justify="space-between">
           {createMovieCard()}
           {/* <Col span={12}>

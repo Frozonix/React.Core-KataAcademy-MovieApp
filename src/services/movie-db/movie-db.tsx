@@ -17,6 +17,13 @@ export class MovieDB {
     return movie.results[id]
   }
 
+  //   sendQuery = (str: string) => {
+  //     const URL = `https://api.themoviedb.org/3/search/movie?api_key=${this.key}&language=en-US&query=${str}&page=1&include_adult=false`
+  //     const movie = this.getResource()
+  //     //  console.log(movie.results[0])
+  //     return movie.results[id]
+  //   }
+
   //   MovieToObject(planet) {
   //     return {
   //       id: this._extractId(planet),
