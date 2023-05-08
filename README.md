@@ -1,1 +1,0 @@
-# React.Core-KataAcademy-MovieApp
