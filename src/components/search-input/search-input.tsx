@@ -1,13 +1,19 @@
 import React, { useState } from 'react'
 import { Input } from 'antd'
 import './search-input.css'
+import { debounce } from 'lodash'
 
-export function SearchInput() {
-  const [inputValue, setInputValue] = useState<string>('')
+interface I_search {
+  inputValue: string
+  setInputValue: any
+}
 
+export function SearchInput({ inputValue, setInputValue }: I_search) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value)
     setInputValue(e.target.value)
+    //  const d = debounce(() => console.log(e.target), 2000)
+    //  d()
+    //  console.log(e.target.value)
   }
 
   return (

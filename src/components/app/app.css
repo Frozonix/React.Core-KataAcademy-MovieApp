@@ -75,3 +75,10 @@ body {
 /* .movie-card__info-wrapper {
 
 } */
+
+.pagination-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+}
