@@ -1,23 +1,46 @@
 import React, { ReactElement, ReactNode, useEffect, useState } from 'react'
-import { Row, Col, Spin, Alert, Pagination } from 'antd'
+import { Row, Col, Spin, Alert, Tabs } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { debounce } from 'lodash'
 
 import { SearchInput } from '../search-input/search-input'
 import { MovieCard } from '../movie-card/movie-card'
+import { Pages } from '../pages/pages'
+import { Context } from '../context/context'
 import { MovieDB } from '../../services/movie-db/movie-db'
 import './app.css'
 
 export function App() {
   const [moviesData, setMoviesData] = useState<string[][]>([])
+  const [moviesGenres, setMoviesGenres] = useState<objGenres>({})
   const [inputValue, setInputValue] = useState<string>('')
   const [isFound, setIsFound] = useState<boolean>(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
+
   interface I_loading {
     loading: boolean
     error: boolean
     errorMessage?: string
   }
+
+  interface I_movieItem {
+    title: 'string'
+    release_date: 'string'
+    overview: 'string'
+    poster_path: 'string'
+    vote_average: number
+    genre_ids: number[]
+  }
+
+  interface I_movieGenre {
+    id: number
+    name: 'string'
+  }
+
+  type objGenres = {
+    [key: number]: string
+  }
+
   const [uploadState, setUploadState] = useState<I_loading>({ loading: true, error: false })
   const antIcon = (
     <LoadingOutlined
@@ -29,42 +52,53 @@ export function App() {
     />
   )
 
-  interface I_movieItem {
-    title: 'string'
-    release_date: 'string'
-    overview: 'string'
-    poster_path: 'string'
-  }
+  useEffect(() => {
+    const api = new MovieDB()
+    api.getGenres().then((result) => {
+      const obj: objGenres = {}
+      result.genres.map((item: I_movieGenre) => {
+        obj[item.id] = item.name
+        return item
+      })
+      setMoviesGenres(obj)
+    })
+  }, [])
 
   useEffect(() => {
     const api = new MovieDB()
     const uploadData = () => {
       setUploadState({ loading: true, error: false })
-      const d = debounce(() => {
-        api
-          .sendQuery(inputValue, currentPage)
-          .then((result) => {
-            const array = result.map((item: I_movieItem, index: number): string[] => {
-              let title
-              let releaseDate
-              let overview
-              let path
-              ;({ title, release_date: releaseDate, overview, poster_path: path } = item)
-              return [title, releaseDate, overview, path]
-            })
-
-            setMoviesData(array)
-            setUploadState({ loading: false, error: false })
-
-            array.length === 0 ? setIsFound(false) : setIsFound(true)
-            inputValue === '' && setIsFound(true)
+      api
+        .sendQuery(inputValue, currentPage)
+        .then((result) => {
+          const array = result.map((item: I_movieItem, index: number): (string | number | number[])[] => {
+            let title
+            let releaseDate
+            let overview
+            let path
+            let voteRating
+            let genres: number[]
+            ;({
+              title,
+              release_date: releaseDate,
+              overview,
+              poster_path: path,
+              vote_average: voteRating,
+              genre_ids: genres,
+            } = item)
+            return [title, releaseDate, overview, path, voteRating, genres]
           })
-          .catch((e: Error) => {
-            console.log(e)
-            setUploadState({ loading: false, error: true, errorMessage: e.toString() })
-          })
-      }, 2000)
-      d()
+
+          setMoviesData(array)
+          setUploadState({ loading: false, error: false })
+
+          array.length === 0 ? setIsFound(false) : setIsFound(true)
+          inputValue === '' && setIsFound(true)
+        })
+        .catch((e: Error) => {
+          console.log(e)
+          setUploadState({ loading: false, error: true, errorMessage: e.toString() })
+        })
     }
     uploadData()
   }, [inputValue, currentPage])
@@ -79,10 +113,19 @@ export function App() {
       let date
       let description
       let path
-      ;[title, date, description, path] = film
+      let voteRating
+      let genres
+      ;[title, date, description, path, voteRating, genres] = film
       return (
-        <Col span={12} key={generateKey()}>
-          <MovieCard title={title} date={date} description={description} path={path} />
+        <Col key={generateKey()} sm={24} xs={24} md={24} lg={12}>
+          <MovieCard
+            title={title}
+            date={date}
+            description={description}
+            path={path}
+            vote={voteRating}
+            genres={genres}
+          />
         </Col>
       )
     })
@@ -101,26 +144,52 @@ export function App() {
     return null
   }
 
-  function changePage(page: number) {
-    setCurrentPage(page)
-  }
+  function renderTabContent(id: string) {
+    if (id === '1') {
+      return (
+        <Context.Provider value={moviesGenres}>
+          <SearchInput inputValue={inputValue} setInputValue={setInputValue} />
+          <section className="movies-content">
+            {!isFound ? <Alert type="info" message="По вашему запросу ничего не найдено!" banner /> : null}
+            {showLoading()}
+            {showError()}
+            {/* <Spin indicator={antIcon} /> */}
+            <Row gutter={[36, 32]} justify="space-between">
+              {createMovieCard()}
+            </Row>
+            <Pages
+              setCurrentPage={setCurrentPage}
+              moviesDataLength={moviesData.length}
+              uploadStateLoading={uploadState.loading}
+            />
+          </section>
+        </Context.Provider>
+      )
+    }
 
-  //   const movie
-  return (
-    <div className="App">
-      <SearchInput inputValue={inputValue} setInputValue={setInputValue} />
-      <section className="movies-content">
-        {!isFound ? <Alert type="info" message="По вашему запросу ничего не найдено!" banner /> : null}
-        {showLoading()}
-        {showError()}
-        {/* <Spin indicator={antIcon} /> */}
+    return (
+      <Context.Provider value={moviesGenres}>
         <Row gutter={[36, 32]} justify="space-between">
           {createMovieCard()}
         </Row>
-        <div className="pagination-wrapper">
-          <Pagination defaultCurrent={1} total={50} onChange={(page) => changePage(page)} />
-        </div>
-      </section>
+      </Context.Provider>
+    )
+  }
+  //   const movie
+  return (
+    <div className="App">
+      <Tabs
+        defaultActiveKey="1"
+        centered
+        items={new Array(2).fill(null).map((_, i) => {
+          const id = String(i + 1)
+          return {
+            label: id === '1' ? 'Search' : 'Rated',
+            key: id,
+            children: renderTabContent(id),
+          }
+        })}
+      />
     </div>
   )
 }

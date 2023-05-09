@@ -1,28 +1,42 @@
-import React from 'react'
-import { Space, Tag } from 'antd'
+import React, { ReactNode, useContext } from 'react'
+import { Space, Tag, Rate } from 'antd'
 import './movie-card.css'
 import { format } from 'date-fns'
 import enGB from 'date-fns/locale/en-GB'
+
+import { Context } from '../context/context'
+import noImage from '../../../public/no-image.png'
 
 interface I_cardProps {
   title: string
   date: string
   description: string
   path: string
+  vote: string
+  genres: any
 }
-export function MovieCard({ title, date, description, path }: I_cardProps) {
+export function MovieCard({ title, date, description, path, vote, genres }: I_cardProps) {
+  const allGenres = useContext(Context)
+
   let newDate: string
   if (date) {
     newDate = format(new Date(date), 'MMMM dd, yyyy', { locale: enGB })
   } else {
     newDate = 'No release date information'
   }
-  /// /////////////////////////////////////////////////
 
   function descriptionSlice() {
-    let shortDescription = description.slice(0, 180)
-    let i = 179
-    if (description.length > 180) {
+    let shortDescription = ''
+
+    title.length < 20 ? (shortDescription = description.slice(0, 160)) : null
+    title.length >= 20 && title.length < 36 ? (shortDescription = description.slice(0, 100)) : null
+    title.length >= 36 && title.length < 52 ? (shortDescription = description.slice(0, 70)) : null
+    title.length >= 52 && title.length < 60 ? (shortDescription = description.slice(0, 50)) : null
+    title.length >= 60 ? (shortDescription = description.slice(0, 30)) : null
+    //  title.length >= 65 ? (shortDescription = description.slice(0, 0)) : null
+
+    let i = shortDescription.length - 1
+    if (description.length > 100) {
       while (shortDescription[i]) {
         i--
         if (shortDescription[i] === ' ') {
@@ -33,23 +47,84 @@ export function MovieCard({ title, date, description, path }: I_cardProps) {
     }
     return shortDescription
   }
-  const setImage = () => `https://image.tmdb.org/t/p/w500/${path}`
+  const setImage = () => {
+    if (!path) {
+      return noImage
+    }
+    return `https://image.tmdb.org/t/p/w500/${path}`
+  }
 
+  const setVoteRating = () => {
+    const rating = Number(Number(vote).toFixed(1))
+
+    if (rating >= 0 && rating <= 3) {
+      return (
+        <div className="movie-card__info-head-rating" style={{ borderColor: '#E90000' }}>
+          <p>{rating}</p>
+        </div>
+      )
+    }
+
+    if (rating > 3 && rating <= 5) {
+      return (
+        <div className="movie-card__info-head-rating" style={{ borderColor: '#E97E00' }}>
+          <p>{rating}</p>
+        </div>
+      )
+    }
+
+    if (rating > 5 && rating <= 7) {
+      return (
+        <div className="movie-card__info-head-rating" style={{ borderColor: '#E9D100' }}>
+          <p>{rating}</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="movie-card__info-head-rating" style={{ borderColor: '#66E900' }}>
+        <p>{rating}</p>
+      </div>
+    )
+  }
+
+  function setGenres() {
+    /* eslint-disable */
+
+    return genres.map((num: number) => {
+      return (
+        <Tag className="movie-card__genre-item" key={'g-' + Math.random().toString(36).substring(2).toString()}>
+          {allGenres[num]}
+        </Tag>
+      )
+    })
+
+    /* eslint-enable */
+  }
   return (
     <div className="movie-card">
       <div className="movie-card__img-wrapper">
         <img src={setImage()} alt="Обложка отсутствует" />
       </div>
       <div className="movie-card__info-wrapper">
-        <h3>{title}</h3>
-        <p className="movie-card__date">{newDate}</p>
-        <div className="movie-card__genres-wrapper">
-          <Space size={[0, 8]} wrap>
-            <Tag className="movie-card__genre-item">Action</Tag>
-            <Tag className="movie-card__genre-item">Drama</Tag>
-          </Space>
+        <div>
+          <div className="movie-card__info-head">
+            <h3>{title}</h3>
+            {setVoteRating()}
+          </div>
+          <p className="movie-card__date">{newDate}</p>
+          <div className="movie-card__genres-wrapper">
+            <Space size={[0, 8]} wrap>
+              {/* <Tag className="movie-card__genre-item">Action</Tag>
+              <Tag className="movie-card__genre-item">Drama</Tag> */}
+              {setGenres()}
+            </Space>
+          </div>
+          <p className="description">{descriptionSlice()}</p>
         </div>
-        <p>{descriptionSlice()}</p>
+        <div className="movie-card__stars-wrapper">
+          <Rate defaultValue={0} count={10} style={{ fontSize: '15px' }} />
+        </div>
       </div>
     </div>
   )

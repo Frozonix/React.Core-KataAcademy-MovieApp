@@ -17,11 +17,13 @@ export function SearchInput({ inputValue, setInputValue }: I_search) {
   }
 
   return (
-    <Input
-      placeholder="Type to search..."
-      className="search-input"
-      onChange={(e) => handleChange(e)}
-      value={inputValue}
-    />
+    <div className="search-input-wrapper">
+      <Input
+        placeholder="Type to search..."
+        className="search-input"
+        onChange={(e) => handleChange(e)}
+        value={inputValue}
+      />
+    </div>
   )
 }

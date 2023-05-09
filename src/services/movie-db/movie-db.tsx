@@ -3,13 +3,16 @@ import { debounce } from 'lodash'
 export class MovieDB {
   key = '40ff753cb28f5f4e4fa6803c99821dd9'
 
-  #apiBase = `https://api.themoviedb.org/3/search/movie?api_key=${this.key}&language=en-US&query=return&page=1&include_adult=false`
-
   getResource = async (url: string) => {
     const responce = await fetch(url)
     if (!responce.ok) {
       throw new Error(`Could not fetch ${url}; status: ${responce.status}`)
     }
+    return responce.json()
+  }
+
+  getGenres = async () => {
+    const responce = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${this.key}&language=en-US`)
     return responce.json()
   }
   //   getMovie = async (id: number) => {
@@ -20,10 +23,8 @@ export class MovieDB {
 
   sendQuery = async (str: string, page: number) => {
     const URL = `https://api.themoviedb.org/3/search/movie?api_key=${this.key}&language=en-US&query=${str}&page=${page}&include_adult=false`
-    //  let responce: any
     const responce = await this.getResource(URL)
-    //  console.log(responce)
-    //  console.log(responce.results)
+    console.log(responce.results)
     return responce.results
   }
 
