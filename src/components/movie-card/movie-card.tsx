@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import enGB from 'date-fns/locale/en-GB'
 
 import { Context } from '../context/context'
-import noImage from '../../../public/no-image.png'
+import noImage from '../../no-image.png'
 
 interface I_cardProps {
   id: number

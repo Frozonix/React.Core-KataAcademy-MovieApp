@@ -131,7 +131,7 @@ export function App() {
     const debouncing = debounce(uploadData, 500)
     debouncing()
     return () => debouncing.cancel()
-  }, [inputValue, currentPage, uploadState])
+  }, [inputValue, currentPage])
 
   function createMovieCard() {
     const generateKey = () => Math.random().toString(36).substring(2)
