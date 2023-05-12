@@ -131,6 +131,7 @@ export function App() {
     const debouncing = debounce(uploadData, 500)
     debouncing()
     return () => debouncing.cancel()
+    // eslint-disable-next-line
   }, [inputValue, currentPage])
 
   function createMovieCard() {
