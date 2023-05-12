@@ -55,7 +55,6 @@ export function MovieCard({
     title.length >= 36 && title.length < 52 ? (shortDescription = description.slice(0, 70)) : null
     title.length >= 52 && title.length < 60 ? (shortDescription = description.slice(0, 50)) : null
     title.length >= 60 ? (shortDescription = description.slice(0, 30)) : null
-    //  title.length >= 65 ? (shortDescription = description.slice(0, 0)) : null
 
     let i = shortDescription.length - 1
     if (description.length > 100) {

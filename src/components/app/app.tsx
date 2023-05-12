@@ -229,7 +229,7 @@ export function App() {
       </Context.Provider>
     )
   }
-  //   const movie
+
   return (
     <div className="App">
       <Tabs

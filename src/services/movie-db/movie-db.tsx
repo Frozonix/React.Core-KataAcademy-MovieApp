@@ -47,10 +47,6 @@ export class MovieDB {
       return [id, title, releaseDate, overview, path, voteRating, genres]
     })
 
-  //  const responce = await fetch(URL)
-
-  //  return responce.json()
-
   getGenres = async () => {
     const responce = await fetch(`https://api.themoviedb.org/3/genre/movie/list?api_key=${this.key}&language=en-US`)
     return responce.json()
