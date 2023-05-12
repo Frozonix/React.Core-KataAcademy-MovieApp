@@ -1,4 +1,4 @@
-import React, { ReactNode, useContext } from 'react'
+import React, { useContext } from 'react'
 import { Space, Tag, Rate } from 'antd'
 import './movie-card.css'
 import { format } from 'date-fns'
@@ -8,14 +8,36 @@ import { Context } from '../context/context'
 import noImage from '../../../public/no-image.png'
 
 interface I_cardProps {
+  id: number
   title: string
   date: string
   description: string
   path: string
   vote: string
   genres: any
+  handleRating?: (stars: number, id: number) => void
+  userRating?: number
+  setUploadState: (obj: I_loading) => void
 }
-export function MovieCard({ title, date, description, path, vote, genres }: I_cardProps) {
+
+interface I_loading {
+  loading: boolean
+  error: boolean
+  errorMessage?: string
+}
+
+export function MovieCard({
+  id,
+  title,
+  date,
+  description,
+  path,
+  vote,
+  genres,
+  handleRating,
+  userRating,
+  setUploadState,
+}: I_cardProps) {
   const allGenres = useContext(Context)
 
   let newDate: string
@@ -90,14 +112,18 @@ export function MovieCard({ title, date, description, path, vote, genres }: I_ca
 
   function setGenres() {
     /* eslint-disable */
-
-    return genres.map((num: number) => {
-      return (
-        <Tag className="movie-card__genre-item" key={'g-' + Math.random().toString(36).substring(2).toString()}>
-          {allGenres[num]}
-        </Tag>
-      )
-    })
+    try {
+      return genres.map((num: number) => {
+        return (
+          <Tag className="movie-card__genre-item" key={'g-' + Math.random().toString(36).substring(2).toString()}>
+            {allGenres[num]}
+          </Tag>
+        )
+      })
+    } catch (e: any) {
+      setUploadState({ loading: false, error: true, errorMessage: e.toString() })
+      return
+    }
 
     /* eslint-enable */
   }
@@ -123,9 +149,20 @@ export function MovieCard({ title, date, description, path, vote, genres }: I_ca
           <p className="description">{descriptionSlice()}</p>
         </div>
         <div className="movie-card__stars-wrapper">
-          <Rate defaultValue={0} count={10} style={{ fontSize: '15px' }} />
+          <Rate
+            defaultValue={userRating || 0}
+            disabled={!!userRating}
+            count={10}
+            style={{ fontSize: '15px' }}
+            onChange={(stars) => handleRating?.(stars, id)}
+          />
         </div>
       </div>
     </div>
   )
+}
+
+MovieCard.defaultProps = {
+  handleRating: null,
+  userRating: 0,
 }

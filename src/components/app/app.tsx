@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Row, Col, Spin, Alert, Tabs } from 'antd'
 import { LoadingOutlined } from '@ant-design/icons'
 import { debounce } from 'lodash'
@@ -8,14 +8,20 @@ import { MovieCard } from '../movie-card/movie-card'
 import { Pages } from '../pages/pages'
 import { Context } from '../context/context'
 import { MovieDB } from '../../services/movie-db/movie-db'
+import { RatedTab } from '../rated-tab/rated-tab'
 import './app.css'
 
 export function App() {
+  const [currentTab, setCurrentTab] = useState<string>('')
+
   const [moviesData, setMoviesData] = useState<string[][]>([])
   const [moviesGenres, setMoviesGenres] = useState<objGenres>({})
+
   const [inputValue, setInputValue] = useState<string>('')
   const [isFound, setIsFound] = useState<boolean>(true)
+
   const [currentPage, setCurrentPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number>(5)
 
   interface I_loading {
     loading: boolean
@@ -24,6 +30,7 @@ export function App() {
   }
 
   interface I_movieItem {
+    id: number
     title: 'string'
     release_date: 'string'
     overview: 'string'
@@ -54,24 +61,40 @@ export function App() {
 
   useEffect(() => {
     const api = new MovieDB()
-    api.getGenres().then((result) => {
-      const obj: objGenres = {}
-      result.genres.map((item: I_movieGenre) => {
-        obj[item.id] = item.name
-        return item
+    api
+      .getGenres()
+      .then((result) => {
+        const obj: objGenres = {}
+        result.genres.map((item: I_movieGenre) => {
+          obj[item.id] = item.name
+          return item
+        })
+        setMoviesGenres(obj)
       })
-      setMoviesGenres(obj)
-    })
+      .catch((e: Error) =>
+        setUploadState({
+          loading: false,
+          error: true,
+          errorMessage: ` Не удалось отправить запрос. \n ${e.toString()}`,
+        })
+      )
   }, [])
 
   useEffect(() => {
     const api = new MovieDB()
     const uploadData = () => {
-      setUploadState({ loading: true, error: false })
+      if (!uploadState.error) {
+        setUploadState({ ...uploadState, loading: true })
+      } else {
+        setUploadState({ ...uploadState, loading: false })
+      }
+
       api
         .sendQuery(inputValue, currentPage)
         .then((result) => {
-          const array = result.map((item: I_movieItem, index: number): (string | number | number[])[] => {
+          setTotalPages(result.total_pages)
+          const array = result.results.map((item: I_movieItem): (string | number | number[])[] => {
+            let id
             let title
             let releaseDate
             let overview
@@ -79,6 +102,7 @@ export function App() {
             let voteRating
             let genres: number[]
             ;({
+              id,
               title,
               release_date: releaseDate,
               overview,
@@ -86,7 +110,7 @@ export function App() {
               vote_average: voteRating,
               genre_ids: genres,
             } = item)
-            return [title, releaseDate, overview, path, voteRating, genres]
+            return [id, title, releaseDate, overview, path, voteRating, genres]
           })
 
           setMoviesData(array)
@@ -95,13 +119,19 @@ export function App() {
           array.length === 0 ? setIsFound(false) : setIsFound(true)
           inputValue === '' && setIsFound(true)
         })
-        .catch((e: Error) => {
-          console.log(e)
-          setUploadState({ loading: false, error: true, errorMessage: e.toString() })
-        })
+        .catch((e: Error) =>
+          setUploadState({
+            loading: false,
+            error: true,
+            errorMessage: ` Не удалось отправить запрос. \n ${e.toString()}`,
+          })
+        )
     }
-    uploadData()
-  }, [inputValue, currentPage])
+
+    const debouncing = debounce(uploadData, 500)
+    debouncing()
+    return () => debouncing.cancel()
+  }, [inputValue, currentPage, uploadState])
 
   function createMovieCard() {
     const generateKey = () => Math.random().toString(36).substring(2)
@@ -109,22 +139,26 @@ export function App() {
       return null
     }
     return moviesData.map((film) => {
+      let id
       let title
       let date
       let description
       let path
       let voteRating
       let genres
-      ;[title, date, description, path, voteRating, genres] = film
+      ;[id, title, date, description, path, voteRating, genres] = film
       return (
         <Col key={generateKey()} sm={24} xs={24} md={24} lg={12}>
           <MovieCard
+            id={Number(id)}
             title={title}
             date={date}
             description={description}
             path={path}
             vote={voteRating}
             genres={genres}
+            handleRating={handleRating}
+            setUploadState={setUploadState}
           />
         </Col>
       )
@@ -139,29 +173,50 @@ export function App() {
   }
   function showError() {
     if (uploadState.error) {
-      return <Alert type="error" message={uploadState.errorMessage} banner />
+      return <Alert type="error" message={uploadState.errorMessage} banner style={{ whiteSpace: 'pre-wrap' }} />
     }
     return null
+  }
+
+  function showContent() {
+    if (!uploadState.loading && !uploadState.error) {
+      return (
+        <>
+          <Row gutter={[36, 32]} justify="space-between">
+            {createMovieCard()}
+          </Row>
+          <Pages
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+            moviesDataLength={moviesData.length}
+            uploadStateLoading={uploadState.loading}
+          />
+        </>
+      )
+    }
+    return null
+  }
+  function handleRating(stars: number, id: number) {
+    if (localStorage.getItem('rated') === null) {
+      localStorage.setItem('rated', JSON.stringify([[id, stars]]))
+    } else {
+      let ids = JSON.parse(localStorage.getItem('rated') || '[]')
+      ids.push([id, stars])
+      localStorage.setItem('rated', JSON.stringify(ids))
+    }
   }
 
   function renderTabContent(id: string) {
     if (id === '1') {
       return (
         <Context.Provider value={moviesGenres}>
-          <SearchInput inputValue={inputValue} setInputValue={setInputValue} />
+          <SearchInput inputValue={inputValue} setInputValue={setInputValue} setCurrentPage={setCurrentPage} />
           <section className="movies-content">
             {!isFound ? <Alert type="info" message="По вашему запросу ничего не найдено!" banner /> : null}
             {showLoading()}
             {showError()}
-            {/* <Spin indicator={antIcon} /> */}
-            <Row gutter={[36, 32]} justify="space-between">
-              {createMovieCard()}
-            </Row>
-            <Pages
-              setCurrentPage={setCurrentPage}
-              moviesDataLength={moviesData.length}
-              uploadStateLoading={uploadState.loading}
-            />
+            {showContent()}
           </section>
         </Context.Provider>
       )
@@ -169,9 +224,7 @@ export function App() {
 
     return (
       <Context.Provider value={moviesGenres}>
-        <Row gutter={[36, 32]} justify="space-between">
-          {createMovieCard()}
-        </Row>
+        <RatedTab uploadState={uploadState} setUploadState={setUploadState} currentTab={currentTab} />
       </Context.Provider>
     )
   }
@@ -189,6 +242,7 @@ export function App() {
             children: renderTabContent(id),
           }
         })}
+        onChange={(id) => setCurrentTab(id)}
       />
     </div>
   )
