@@ -74,7 +74,7 @@ export function App() {
       .catch((e: Error) =>
         setUploadState({
           loading: false,
-          error: true,
+          error: false,
           errorMessage: ` Не удалось отправить запрос. \n ${e.toString()}`,
         })
       )

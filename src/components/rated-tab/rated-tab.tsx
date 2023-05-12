@@ -21,6 +21,7 @@ interface I_loading {
 
 export function RatedTab({ uploadState, setUploadState, currentTab }: I_RatedProps) {
   const [ratedData, setRatedData] = useState<dataTemplate>([])
+  const [isEmpty, setIsEmpty] = useState<boolean>(false)
 
   const antIcon = (
     <LoadingOutlined
@@ -32,11 +33,14 @@ export function RatedTab({ uploadState, setUploadState, currentTab }: I_RatedPro
     />
   )
   useEffect(() => {
-    if (currentTab === '2' && !uploadState.error) {
+    const array = JSON.parse(localStorage.getItem('rated') || '[]')
+    if (array.length !== 0) {
+      setIsEmpty(false)
+    }
+    if (currentTab === '2' && !uploadState.error && array.length !== 0) {
       setUploadState({ loading: true, error: false })
       const getMovies = async () => {
         const api = new MovieDB()
-        const array = JSON.parse(localStorage.getItem('rated') || '[]')
         const ids = array.map((item: number[]) => item[0])
         const promisesArray = await api.getRatedMovies(ids).then()
         let newState = await Promise.all(promisesArray)
@@ -53,7 +57,10 @@ export function RatedTab({ uploadState, setUploadState, currentTab }: I_RatedPro
       }
       getMovies()
     }
-  }, [currentTab, setUploadState, uploadState.error])
+    if (array.length === 0) {
+      setIsEmpty(true)
+    }
+  }, [currentTab, setUploadState, uploadState.error, isEmpty])
 
   useEffect(() => {
     if (ratedData.length !== 0 && !uploadState.error) {
@@ -100,9 +107,13 @@ export function RatedTab({ uploadState, setUploadState, currentTab }: I_RatedPro
     return <Spin indicator={antIcon} style={{ display: 'block', margin: '40px auto 0 auto' }} />
   }
 
-  return (
-    <Row gutter={[36, 32]} justify="space-between">
-      {currentTab === '2' ? createMovieCard() : null}
-    </Row>
-  )
+  function showContent() {
+    return (
+      <Row gutter={[36, 32]} justify="space-between">
+        {currentTab === '2' ? createMovieCard() : null}
+      </Row>
+    )
+  }
+
+  return isEmpty ? <Alert type="info" message="Вы не оценили ни один фильм" banner /> : showContent()
 }
