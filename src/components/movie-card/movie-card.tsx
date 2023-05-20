@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useState, useContext } from 'react'
 import { Space, Tag, Rate } from 'antd'
 import './movie-card.css'
 import { format } from 'date-fns'
@@ -38,6 +38,7 @@ export function MovieCard({
   userRating,
   setUploadState,
 }: I_cardProps) {
+  const [isDisable, setIsDisable] = useState(false)
   const allGenres = useContext(Context)
 
   let newDate: string
@@ -147,10 +148,13 @@ export function MovieCard({
         <div className="movie-card__stars-wrapper">
           <Rate
             defaultValue={userRating || 0}
-            disabled={!!userRating}
+            disabled={!!userRating || isDisable}
             count={10}
             style={{ fontSize: '15px' }}
-            onChange={(stars) => handleRating?.(stars, id)}
+            onChange={(stars) => {
+              setIsDisable(true)
+              handleRating?.(stars, id)
+            }}
           />
         </div>
       </div>
