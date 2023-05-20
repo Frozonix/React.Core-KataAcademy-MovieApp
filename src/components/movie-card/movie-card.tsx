@@ -16,7 +16,7 @@ interface I_cardProps {
   vote: string
   genres: any
   handleRating?: (stars: number, id: number) => void
-  userRating?: number
+  userRating?: number | null
   setUploadState: (obj: I_loading) => void
 }
 
@@ -123,7 +123,6 @@ export function MovieCard({
       setUploadState({ loading: false, error: true, errorMessage: e.toString() })
       return
     }
-
     /* eslint-enable */
   }
   return (
@@ -140,8 +139,6 @@ export function MovieCard({
           <p className="movie-card__date">{newDate}</p>
           <div className="movie-card__genres-wrapper">
             <Space size={[0, 8]} wrap>
-              {/* <Tag className="movie-card__genre-item">Action</Tag>
-              <Tag className="movie-card__genre-item">Drama</Tag> */}
               {setGenres()}
             </Space>
           </div>

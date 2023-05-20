@@ -5,8 +5,6 @@
 }
 
 body {
-  /* padding: 0 215px; */
-
   background-color: #e5e5e5;
   height: 100%;
 }
@@ -20,14 +18,7 @@ body {
   min-height: 100vh;
   padding: 20px 32px;
   flex: 0 1 1010px;
-  /* max-width: 1010px; */
 }
-
-/* .movies-content {
-  padding: 20px 32px;
-} */
-
-/* //////////////////////////////////////////////////////// */
 
 .pagination-wrapper {
   width: 100%;

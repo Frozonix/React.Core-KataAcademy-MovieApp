@@ -12,7 +12,7 @@ import { RatedTab } from '../rated-tab/rated-tab'
 import './app.css'
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('')
+  const [currentTab, setCurrentTab] = useState<string>('1')
 
   const [moviesData, setMoviesData] = useState<string[][]>([])
   const [moviesGenres, setMoviesGenres] = useState<objGenres>({})
@@ -94,13 +94,8 @@ export function App() {
         .then((result) => {
           setTotalPages(result.total_pages)
           const array = result.results.map((item: I_movieItem): (string | number | number[])[] => {
-            let id
-            let title
-            let releaseDate
-            let overview
-            let path
-            let voteRating
-            let genres: number[]
+            // eslint-disable-next-line
+            let id, title, releaseDate, overview, path, voteRating, genres: number[]
             ;({
               id,
               title,
@@ -140,14 +135,19 @@ export function App() {
       return null
     }
     return moviesData.map((film) => {
-      let id
-      let title
-      let date
-      let description
-      let path
-      let voteRating
-      let genres
+      // eslint-disable-next-line
+      let id: string | number, title, date, description, path, voteRating, genres
       ;[id, title, date, description, path, voteRating, genres] = film
+
+      const ratingArray = JSON.parse(localStorage.getItem('rated') || '[]')
+      let rating
+      for (let i = 0; i < ratingArray.length; i++) {
+        if (id === ratingArray[i][0]) {
+          rating = ratingArray[i][1]
+          break
+        }
+      }
+
       return (
         <Col key={generateKey()} sm={24} xs={24} md={24} lg={12}>
           <MovieCard
@@ -159,6 +159,7 @@ export function App() {
             vote={voteRating}
             genres={genres}
             handleRating={handleRating}
+            userRating={rating || null}
             setUploadState={setUploadState}
           />
         </Col>

@@ -25,8 +25,6 @@
   display: flex;
   flex-flow: column nowrap;
   justify-content: space-between;
-  /* align-content: space-between; */
-  /* justify-content: start; */
 }
 .movie-card__info-head {
   display: flex;
@@ -38,7 +36,6 @@
   line-height: 28px;
   align-items: center;
   margin-bottom: 7px;
-  /* width: 150px; */
 }
 .movie-card__info-head-rating {
   width: 30px;
